@@ -188,6 +188,7 @@ $this->data = array_merge( $this->data , $this->language->load('catalog/manufact
 			$this->data['manufacturers'][] = array(
 				'manufacturer_id' => $result['manufacturer_id'],
 				'name'            => $result['name'],
+				'descr'           => $result['descr'],
 				'sort_order'      => $result['sort_order'],
 				'selected'        => isset($this->request->post['selected']) && in_array($result['manufacturer_id'], $this->request->post['selected']),
 				'action'          => $action
@@ -316,6 +317,14 @@ $this->data = array_merge( $this->data , $this->language->load('catalog/manufact
 			$this->data['name'] = $manufacturer_info['name'];
 		} else {	
 			$this->data['name'] = '';
+		}
+
+		if (isset($this->request->post['descr'])) {
+			$this->data['descr'] = $this->request->post['descr'];
+		} elseif (!empty($manufacturer_info)) {
+			$this->data['descr'] = $manufacturer_info['descr'];
+		} else {
+			$this->data['descr'] = '';
 		}
 
 		$this->load->model('setting/store');

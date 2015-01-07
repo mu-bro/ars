@@ -2255,3 +2255,7 @@ ul.box-filter > li ul {
 	font-weight: 500;
 	text-transform: uppercase;
 }
+.manufacturer-info .left {
+	float:left;
+	margin: 0 20px 20px 0;
+}

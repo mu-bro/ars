@@ -156,6 +156,17 @@ $this->data = array_merge( $this->data , $this->language->load('product/manufact
 			);
 
 			$this->data['heading_title'] = $manufacturer_info['name'];
+			$this->data['descr'] = html_entity_decode($manufacturer_info['descr'], ENT_QUOTES, 'UTF-8');
+
+			$this->load->model('tool/image');
+
+			if ($manufacturer_info['image']) {
+				$this->data['image'] = $this->model_tool_image->resize($manufacturer_info['image'], 200, 100);
+			} else {
+				$this->data['image'] = '';
+			}
+
+
 			$this->data['text_compare'] = sprintf($this->language->get('text_compare'), (isset($this->session->data['compare']) ? count($this->session->data['compare']) : 0));
 
 			$this->data['compare'] = $this->url->link('product/compare');
