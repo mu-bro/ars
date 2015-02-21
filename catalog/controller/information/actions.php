@@ -170,7 +170,7 @@ class ControllerInformationActions extends Controller {
 				$this->document->setTitle($this->language->get('heading_title'));
 
 				$this->document->breadcrumbs[] = array(
-					'href'      => $this->url->link('information/news'),
+					'href'      => $this->url->link('information/actions'),
 					'text'      => $this->language->get('heading_title'),
 					'separator' => $this->language->get('text_separator')
 				);
@@ -204,7 +204,7 @@ class ControllerInformationActions extends Controller {
 		  		$this->document->setTitle($this->language->get('text_error'));
 
 	     		$this->document->breadcrumbs[] = array(
-	        		'href'      => $this->url->link('information/news'),
+	        		'href'      => $this->url->link('information/actions'),
 	        		'text'      => $this->language->get('text_error'),
 	        		'separator' => $this->language->get('text_separator')
 	     		);

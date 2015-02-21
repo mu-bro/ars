@@ -69,14 +69,17 @@ class ControllerModuleActions extends Controller {
 				
 			$this->data['news_data'][] = array(
 				'title'        => html_entity_decode($title),				
-				'href'         => $this->url->link('information/news', 'news_id=' . $result['news_id']),
+				'href'         => $this->url->link('information/actions', 'news_id=' . $result['news_id']),
 				'date_added'   => $date,
 				'date_added_plane'   => date('d.m.Y',strtotime($result['date_added'])),
 				'date_available'   => date($this->language->get('date_format_short'), strtotime($result['date_available'])),
 				'description'  => strip_tags(html_entity_decode($description)),
+			    'short_descr'  => (!empty($result['short_descr'])) ? $result['short_descr'] : strip_tags(html_entity_decode
+				($description)),
 				'image' => $image
 			);
-		}		
+		}
+
 		$this->id = 'news';
 
 		$this->data['module'] = $module++;

@@ -53,6 +53,7 @@ $(document).ready(function() {
 <?php echo $google_analytics; ?>
 </head>
 <body>
+<?php echo $yandex_analytics; ?>
 <?php echo $lng_editable;  ?>
 <div id="container">
 <div id="header">

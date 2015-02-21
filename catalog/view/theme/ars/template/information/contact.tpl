@@ -16,11 +16,15 @@
 						<div class="address"><?php echo $address; ?></div>
 						<?php if ($telephone) { ?>
 							<b><?php echo $text_telephone; ?></b>
-							<?php echo $telephone; ?><br />
+							<?php echo $telephone . ', ' . $this->config->get('config_telephone2'); ?><br />
 						<?php } ?>
 						<?php if ($config_email) { ?>
 							<b><?php echo $text_email; ?></b>
 							<?php echo $config_email; ?><br />
+						<?php } ?>
+						<?php if ($delivery_email) { ?>
+							<b><?php echo $text_delivery_telephone; ?></b>
+							<?php echo $delivery_email; ?><br />
 						<?php } ?>
 						<?php if ($fax) { ?>
 							<b><?php echo $text_fax; ?></b>
@@ -42,7 +46,7 @@
 						<?php if ($error_email) { ?>
 						<span class="error"><?php echo $error_email; ?></span>
 						<?php } ?>
-						<textarea name="enquiry" cols="40" rows="10" style="width: 100%;" placeholder="<?php echo $entry_name; ?>"><?php echo $enquiry; ?></textarea>
+						<textarea name="enquiry" cols="40" rows="10" style="width: 100%;" placeholder="<?php echo $entry_enquiry; ?>"><?php echo $enquiry; ?></textarea>
 						<br />
 						<?php if ($error_enquiry) { ?>
 						<span class="error"><?php echo $error_enquiry; ?></span>
@@ -56,7 +60,7 @@
             </div>
         </div> 
 
-<?php if (!empty($coords['yandex_y']) && false) { ?>
+<?php if (!empty($coords['yandex_y'])) { ?>
 	<script src="http://api-maps.yandex.ru/2.0/?load=package.standard&mode=debug&lang=ru-RU&modules=pmap" type="text/javascript"></script>
 	<script type="text/javascript">
 		ymaps.ready(init);

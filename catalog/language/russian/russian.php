@@ -76,4 +76,6 @@ $_['text_width']    = 'Ширина';
 $_['text_height']    = 'Высота';
 
 
+
+/* replaced "text_in_stock" */ $_["text_in_stock"] = "В наличии";
 ?>

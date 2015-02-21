@@ -197,6 +197,7 @@ class ControllerModuleFilterPro extends Controller {
 		$url = (isset($_POST['path'])) ? ("&path=" . $_POST['path']) : "";
 
 		$this->data['products'] = $this->model_catalog_product->prepareProductList($products,$url);
+
 		$this->data = array_merge( $this->data , $this->language->load('product/category'));
 
 		$this->template = $this->config->get('config_template') . '/template/product/product_list.tpl';

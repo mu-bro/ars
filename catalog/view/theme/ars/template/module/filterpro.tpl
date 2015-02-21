@@ -258,7 +258,7 @@
 						$('.f_color').removeClass('active');
 						$('.hidden_color').removeClass('active');
 						$('.all_color_link_td').removeClass('active');
-						
+
 						if ( $(this).parent().parent().find('label[for="'+input_id+'"]').hasClass('active') ) {
 							$(this).parent().parent().find('label[for="'+input_id+'"]').removeClass('active');
 							$('#hidden_color_' + option_id).removeClass('active');

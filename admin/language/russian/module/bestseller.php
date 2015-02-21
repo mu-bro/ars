@@ -1,8 +1,8 @@
 <?php
 // Heading
-$_['heading_title']       = 'Хиты продаж';
+$_['heading_title']       = 'Похожие товары';
 
-// Text
+// Texts
 $_['text_module']         = 'Модули';
 $_['text_success']        = 'Настройки модуля обновлены!';
 $_['text_content_top']    = 'Верх страницы';

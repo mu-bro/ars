@@ -23,6 +23,7 @@
 <script type="text/javascript" src="view/javascript/jquery/tabs.js"></script>
 <script type="text/javascript" src="view/javascript/jquery/superfish/js/superfish.js"></script>
 <script type="text/javascript" src="view/javascript/common.js"></script>
+<link rel="stylesheet" type="text/css" href="../catalog/view/theme/<?php echo $this->config->get('config_template'); ?>/stylesheet/font-awesome.css">
 <?php foreach ($scripts as $script) { ?>
 <script type="text/javascript" src="<?php echo $script; ?>"></script>
 <?php } ?>
@@ -51,6 +52,12 @@ $(document).ready(function(){
     </script>
 </head>
 <body>
+<?php if (isset ($this->session->data['token']) && $this->user->hasPermission('access', 'module/qpanel')) { ?>
+<div class="qpanel"></div>
+<script type="text/javascript"><!--
+$(".qpanel").load("index.php?route=module/qpanel/load&token=<?php echo $this->session->data['token']; ?>");
+//--></script>
+<?php } ?>
 <div id="container">
     <div id="header">
   <div class="div1">

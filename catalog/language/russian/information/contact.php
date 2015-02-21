@@ -7,7 +7,8 @@ $_['text_location']  = 'Наше местонахождение';
 $_['text_contact']   = 'Написать нам';
 $_['text_address']   = 'Адрес:';
 $_['text_email']     = 'E-Mail:';
-$_['text_telephone'] = 'Телефон:';
+$_['text_telephone'] = 'Телефоны:';
+$_['text_delivery_telephone'] = 'Телефон доставки:';
 $_['text_fax']       = 'Факс:';
 $_['text_message']   = '<p>Ваш запрос был успешно отправлен администрации магазина!</p>';
 

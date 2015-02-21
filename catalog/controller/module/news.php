@@ -75,6 +75,8 @@ class ControllerModuleNews extends Controller {
 				'date_added_plane'   => date('d.m.Y',strtotime($result['date_added'])),
 				'date_available'   => date($this->language->get('date_format_short'), strtotime($result['date_available'])),
 				'description'  => strip_tags(html_entity_decode($description)),
+				'short_descr'  => (!empty($result['short_descr'])) ? $result['short_descr'] : strip_tags(html_entity_decode
+				($description)),
 				'image' => $image
 			);
 		}

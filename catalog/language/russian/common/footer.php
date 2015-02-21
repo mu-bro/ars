@@ -14,5 +14,6 @@ $_['text_account']      = 'Личный Кабинет';
 $_['text_order']        = 'История заказов';
 $_['text_wishlist']     = 'Закладки';
 $_['text_newsletter']   = 'Рассылка';
+$_['text_delivery']   = 'Телефон доставки';
 $_['text_powered'] 	    = 'Все права защищены &copy; %s';
 ?>

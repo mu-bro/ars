@@ -1,6 +1,6 @@
 
 <div class="box">
-	<div class="box-heading"><a href="<?php echo $this->url->link("information/" . $module_type); ?>"><?php echo $heading_title; ?></a></div>
+	<div class="box-heading news"><a href="<?php echo $this->url->link("information/" . $module_type); ?>"><?php echo $heading_title; ?></a></div>
 	<div class="box-content <?php echo $setting['position']; ?>">
 		<?php if (isset($news_info)) { ?>
 			<div class="review_block small_block" >
@@ -33,7 +33,7 @@
 								<?php echo $news['date_added'][0] . " " . $news['date_added'][1] . " " . $news['date_added'][2]; ?>
 							</div>
 							<div class="manufacturer-content">
-								<?php echo $news['description']; ?>
+								<?php echo $news['short_descr']; ?>
 							</div>
 						</div>
 					</li>
@@ -42,7 +42,7 @@
 		<?php } ?>
 	</div>
 </div>
-<?php if ($setting['position'] == "content_top") { ?>
+<?php if (in_array($setting['position'],array("content_top","content_bottom"))) { ?>
 	<script type="text/javascript">
 	$('.bxslider_<?php echo $module_type . "_" . $module; ?>').bxSlider({
 	minSlides: 2,

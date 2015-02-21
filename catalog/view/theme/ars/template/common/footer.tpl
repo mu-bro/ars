@@ -20,7 +20,7 @@
 			<div class="text">
 				<?php echo str_replace("\r","<br/>",$this->config->get("config_schedule_bottom")); ?>
 			</div>
-			<div class="sub_title i_email">
+			<div class="sub_title i_email second">
 				e-mail
 			</div>
 			<div class="text">
@@ -29,14 +29,23 @@
 		</div>
 		<div class="column">
 			<h3>&nbsp;</h3>
-			<div class="sub_title i_time">
+			<div class="sub_title i_phone">
 				<?php echo $text_phones; ?>
 			</div>
 			<div class="phones-wrapp">
-				<i class="fa fa-phone left"></i>
 				<div class="phones left">
 					<p><span><?php echo $this->config->get("config_telephone_pre"); ?></span> <strong><?php echo $this->config->get("config_telephone"); ?></strong></p>
 					<p style="float:right;"><span><?php echo $this->config->get("config_telephone2_pre"); ?></span> <strong><?php echo $this->config->get("config_telephone2"); ?></strong></p>
+				</div>
+			</div>
+			<div class="clear"></div>
+			<div class="sub_title i_bus second">
+				<?php echo $text_delivery; ?>
+			</div>
+			<div class="phones-wrapp">
+				<div class="phones left">
+					<p><span><?php echo $this->config->get("config_telephone_delivery_pre"); ?></span> <strong><?php echo
+							$this->config->get("config_telephone_delivery"); ?></strong></p>
 				</div>
 			</div>
 		</div>
@@ -62,4 +71,5 @@ OpenCart is open source software and you are free to remove the powered by OpenC
 Please donate via PayPal to donate@opencart.com
 //-->
 </div>
+<?php echo $chat_plugin; ?>
 </body></html>

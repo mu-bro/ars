@@ -635,7 +635,7 @@ class Spreadsheet_Excel_Reader
                                     $formatstr = $this->formatRecords[$indexCode];
                                 //echo '.other.';
                                 //echo "\ndate-time=$formatstr=\n";
-                                if ($formatstr)
+                                if (isset($formatstr))
                                 if (preg_match("/[^hmsday\/\-:\s]/i", $formatstr) == 0) { // found day and time format
                                     $isdate = TRUE;
                                     $formatstr = str_replace('mm', 'i', $formatstr);

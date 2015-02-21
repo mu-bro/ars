@@ -6,6 +6,10 @@ class ControllerProductProduct extends Controller {
 
 $this->data = array_merge( $this->data , $this->language->load('product/product'));
 
+		$this->document->addScript('catalog/view/javascript/jquery/jquery.maskedinput-1.3.min.js');
+		$this->document->addScript('catalog/view/javascript/jquery/fancybox/jquery.fancybox.pack.js');
+		$this->document->addStyle('catalog/view/javascript/jquery/fancybox/jquery.fancybox.css');
+
 		$this->data['breadcrumbs'] = array();
 
 		$this->data['breadcrumbs'][] = array(
@@ -242,6 +246,7 @@ $this->data = array_merge( $this->data , $this->language->load('product/product'
 			$this->data['model'] = $product_info['model'];
 			$this->data['reward'] = $product_info['reward'];
 			$this->data['points'] = $product_info['points'];
+			$this->data['sku'] = $product_info['sku'];
 
 			$this->data['product_info'] = $product_info;
 			
@@ -264,6 +269,9 @@ $this->data = array_merge( $this->data , $this->language->load('product/product'
 
 			if ($product_info['image']) {
 				$this->data['thumb'] = $this->model_tool_image->resize($product_info['image'], $this->config->get('config_image_thumb_width'), $this->config->get('config_image_thumb_height'));
+				if (empty($this->data['thumb'])) {
+					$this->data['thumb'] = $this->model_tool_image->resize("no_image.png", $this->config->get('config_image_thumb_width'), $this->config->get('config_image_thumb_height'));
+				}
 			} else {
 				$this->data['thumb'] = '';
 			}
@@ -281,12 +289,14 @@ $this->data = array_merge( $this->data , $this->language->load('product/product'
 
 			if (($this->config->get('config_customer_price') && $this->customer->isLogged()) || !$this->config->get('config_customer_price')) {
 				$this->data['price'] = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')),"","",true,true);
+				$p_price = $product_info['price'];
 			} else {
 				$this->data['price'] = false;
 			}
 
 			if ((float)$product_info['special']) {
 				$this->data['special'] = $this->currency->format($this->tax->calculate($product_info['special'], $product_info['tax_class_id'], $this->config->get('config_tax')),"","",true,true);
+				$p_price = $product_info['special'];
 			} else {
 				$this->data['special'] = false;
 			}
@@ -364,6 +374,29 @@ $this->data = array_merge( $this->data , $this->language->load('product/product'
 			$this->data['rating'] = (int)$product_info['rating'];
 			$this->data['description'] = html_entity_decode($product_info['description'], ENT_QUOTES, 'UTF-8');
 			$this->data['attribute_groups'] = $this->model_catalog_product->getProductAttributes($this->request->get['product_id']);
+
+			//p($this->data['attribute_groups']);
+			/* Sale icons */
+			$capacity = $this->model_catalog_product->getProductCapacity($this->request->get['product_id']);
+			if ($capacity) {
+				$oldBatteryPrice = $this->model_catalog_product->getCapacityPrice
+				($capacity);
+				$this->data['oldBatteryPrice'] = $this->currency->format($oldBatteryPrice);
+			}
+			if (!$product_info['special']) {
+				$this->data['sale10'] = $this->currency->format($product_info['price'] * 0.1);
+			}
+			if ($this->data['oldBatteryPrice'] || isset($this->data['sale10'])) {
+				$maxDiscountPrice = $p_price;
+				if (isset($this->data['sale10'])) {
+					$maxDiscountPrice -= $p_price * 0.1;
+				}
+				if (isset($this->data['oldBatteryPrice'])) {
+					$maxDiscountPrice -= $oldBatteryPrice;
+				}
+				$this->data['maxDiscountPrice'] =  $this->currency->format($maxDiscountPrice);
+			}
+
 
 			$this->data['products'] = array();
 
@@ -701,6 +734,91 @@ $this->data = array_merge( $this->data , $this->language->load('product/product'
 			$json['success'] = $this->language->get('text_upload');
 		}
 
+		$this->response->setOutput(json_encode($json));
+	}
+
+	public function request() {
+		$json = array();
+		$post = $this->request->post;
+		if (!isset($post['delivery_type'])) {
+			$json['error'] = "Выберите тип доставки";
+			$json['error_form'] = "delivery_type";
+		} elseif ($post['delivery_type'] == 'D' && empty($post['address'])) {
+			$json['error'] = "Выберите адрес доставки акуумулятора";
+			$json['error_form'] = "address";
+		} elseif ($post['delivery_type'] == 'S' && $post['shop_address'] == '*') {
+			$json['error'] = "Выберите магазин ";
+			$json['error_form'] = "shop_address";
+		}
+		if (empty($post['phone'])) {
+			$json['error'] = "Телефон должен быть заполнен";
+			$json['error_form'] = "phone";
+		}
+		if (empty($post['name'])) {
+			$json['error'] = "Имя должно быть заполнено";
+			$json['error_form'] = "name";
+		}
+		if (empty($json['error'])) {
+			$email_text = (!empty($post['email'])) ? "E-mail заявителя: <b>". $post['email'] ."</b><br/>" : "";
+			$comment_text = (!empty($post['comment'])) ? "Комментарий заявителя: <b><br/>". $post['comment'] ."</b><br/>" : "";
+			$emails = array();
+
+			$product_id = $post['product_id'];
+			$this->load->model('catalog/product');
+			$product_info = $this->model_catalog_product->getProduct($product_id);
+
+			$product_name = "<h3>Аккумулятор</h3>
+					Название: <b>". $product_info['name'] ."</b><br/>
+					Артикул: <b>". $product_info['sku'] ."</b><br/>
+					Производитель: <b><br/>". $product_info['manufacturer'] ."</b><br/>
+					";
+
+			if ($post['delivery_type'] == 'D') {
+				$title = $this->config->get('config_name') . " - Заказ доставки аккумулятора";
+				$html = "<h3>Заказ доставки аккумулятора</h3>
+					Имя заявителя: <b>". $post['name'] ."</b><br/>
+					Телефон заявителя: <b>". $post['phone'] ."</b><br/>
+					$email_text
+					Адрес доставки: <b><br/>". $post['address'] ."</b><br/>
+					$comment_text
+					$product_name
+					";
+				$emails[] = $this->config->get('config_deliver_email');
+			} else {
+				$title = $this->config->get('config_name') . " - Заказ на покупку аккумулятора";
+				$html = "<h3>Заказ на покупку аккумулятора</h3>
+					Имя заявителя: <b>". $post['name'] ."</b><br/>
+					Телефон заявителя: <b>". $post['phone'] ."</b><br/>
+					$email_text
+					Магазин: <b><br/>". $post['shop_address'] ."</b><br/>
+					$comment_text
+					$product_name
+					";
+				$emails[] = $this->config->get('config_email');
+				$emails[] = $this->config->get('config_deliver_email');
+			}
+
+			$mail = new Mail();
+			$mail->protocol = $this->config->get('config_mail_protocol');
+			$mail->parameter = $this->config->get('config_mail_parameter');
+			$mail->hostname = $this->config->get('config_smtp_host');
+			$mail->username = $this->config->get('config_smtp_username');
+			$mail->password = $this->config->get('config_smtp_password');
+			$mail->port = $this->config->get('config_smtp_port');
+			$mail->timeout = $this->config->get('config_smtp_timeout');
+			$mail->setFrom($this->config->get('config_email'));
+			$mail->setSender($this->config->get('config_name'));
+			$mail->setSubject($title);
+			$mail->setHtml($html);
+
+			foreach($emails as $email) {
+				$mail->setTo($email);
+				$mail->send();
+			}
+
+
+			$json['success'] = "Ваша заявка принята! Скоро с Вами свяжется наш менеджер. Спасибо.";
+		}
 		$this->response->setOutput(json_encode($json));
 	}
 }

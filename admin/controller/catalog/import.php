@@ -280,6 +280,8 @@ class ControllerCatalogImport extends Controller {
 		$this->data['entry_description'] = $this->language->get('entry_description');
 		$this->data['entry_sort_order'] = $this->language->get('entry_sort_order');
 		
+		$this->data['import_version'] = $this->language->get('import_version');
+		
 		$this->data['button_save'] = $this->language->get('button_save');
 		$this->data['button_cancel'] = $this->language->get('button_cancel');
 
@@ -349,6 +351,8 @@ class ControllerCatalogImport extends Controller {
 		
 		$this->data["attributs"] = $attr_data;
 
+		$this->data['options'] = $this->model_catalog_import->getOptions();
+
 		if (!isset($this->request->get['import_id'])) {
 			$this->data['action'] = $this->url->link('catalog/import/insert', 'token=' . $this->session->data['token'] . $url, 'SSL');
 		} else {
@@ -366,7 +370,7 @@ class ControllerCatalogImport extends Controller {
 				$import_info["setting"] = array();
 			}
 		}
-		
+
 		$this->load->model('localisation/language');
 		
 		$this->data['languages'] = $this->model_localisation_language->getLanguages();
@@ -403,7 +407,7 @@ class ControllerCatalogImport extends Controller {
 
 		$this->response->setOutput($this->render());
 	}
-	
+
 	private function getFormFile() {
 		$this->data['heading_title'] = $this->language->get('heading_title');
 		$this->data['button_save'] = $this->language->get('button_save');
@@ -576,7 +580,6 @@ class ControllerCatalogImport extends Controller {
 	}
 	
 	public function importing(){
-		setlocale(LC_ALL, 'ru_RU.UTF-8');
 		$this->load->language('catalog/import');
 
 		$this->document->setTitle($this->language->get('heading_title'));
@@ -628,6 +631,35 @@ class ControllerCatalogImport extends Controller {
 		}
 
 		$this->getFormFile();
+	}
+
+	public function deleteProducts() {
+
+		$this->db->query("UPDATE " . DB_PREFIX . "product SET status = 0");
+
+
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_attribute");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_description");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_discount");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_filter");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_image");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_option");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_option_value");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_related");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_related");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_reward");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_special");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_to_category");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_to_download");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_to_layout");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "product_to_store");
+//		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_profile`");
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "review");
+//
+//		$this->db->query("DELETE FROM " . DB_PREFIX . "url_alias WHERE query LIKE 'product_id=%'");
+
+		$this->cache->delete('product');
 	}
 	
 	private function importFile( $filename, $import_settings ){
@@ -693,17 +725,17 @@ class ControllerCatalogImport extends Controller {
 		// Get Categorys
 		$category_ids = array();
 		foreach( $this->model_catalog_import->getCategories(0) as $category ){
-			$category_ids[ mb_strtolower($category["name"],'UTF-8') ] = $category["category_id"];
+			$category_ids[ $category["name"] ] = $category["category_id"];
 		}
 		$this->category_ids = $category_ids;
 		
 		// Get Manufacturers
 		$manufacturer_ids = array();
 		foreach( $this->model_catalog_import->getManufacturers() as $manufacturers ){
-			$manufacturer_ids[ mb_strtolower($manufacturers["name"],'UTF-8') ] = $manufacturers["manufacturer_id"];
+			$manufacturer_ids[ $manufacturers["name"] ] = $manufacturers["manufacturer_id"];
 		}
 		$this->manufacturer_ids = $manufacturer_ids;
-	
+
 		$this->import_product_added = 0;
 		$this->import_product_updated = 0;
 		$this->import_product_error = 0;
@@ -747,6 +779,8 @@ class ControllerCatalogImport extends Controller {
 			$import_settings[5] = array();
 		}
 
+		$this->deleteProducts();
+
 		while( ( $row_array = $this->getLine() ) !== FALSE ){
 		
 			if( count( $row_array ) == count( $header_info ) ) {
@@ -754,9 +788,7 @@ class ControllerCatalogImport extends Controller {
 				foreach( $row_array as $key=>$value ){
 					$data[ "{" . $header_info[ $key ] . "}" ] = $value;
 				}
-				
- 				if (empty($row_array[0])) continue;
-				
+
 				// Расположение категорий в файле
 				if( !empty( $import_settings[3]["category_column"] ) ) {
 					// Категории располагаются на отдельных строках. Продукты находятся под строкой категории.
@@ -796,15 +828,21 @@ class ControllerCatalogImport extends Controller {
 					$data["{generated_category}"] = implode( $this->category_delimiter , $category_array );
 					
 				}
-				
+
 				// Get/Create category from product
 				$category_id = $this->import_category( $data, $import_settings[3] );
 				
 				// Get/Create manufacturer form product
-				$manufacturer_id = $this->import_manufacturer( $data, $import_settings[4]);
-							
+				$manufacturer_id = $this->import_manufacturer( $data, $import_settings[4] );
+
+				if(isset($import_settings[6])) {
+					$product_option = $this->collectProductOption($data, $import_settings[6]);
+				} else {
+					$product_option = array();
+				}
+
 				// Update/Create product & attribut
-				$product_id = $this->import_product( $data, $import_settings[2], $manufacturer_id, $category_id );
+				$product_id = $this->import_product( $data, $import_settings[2], $product_option, $manufacturer_id, $category_id , $import_settings);
 
 				$this->model_catalog_import->clearProductAttributes( $product_id );
 				if( $attribute_create ) $this->import_attributes( $product_id, $data, $import_settings[5], $attribute_fields );
@@ -822,7 +860,7 @@ class ControllerCatalogImport extends Controller {
 		$this->cache->delete('product');
 		$this->cache->delete('manufacturer');
 	}
-	
+
 	private function preActionCsvFile( $filename ){
 		require_once 'pear/Spreadsheet/Csv/Csv_reader.php';
 		
@@ -903,6 +941,7 @@ class ControllerCatalogImport extends Controller {
 		for( $i = $this->beginning; $i < $this->reader->sheets[0]["numCols"] + $this->beginning; $i ++ ) {
 			$data[$i - $this->beginning] = !empty( $this->reader->sheets[0]["cells"][ $this->currentLineNumber ][$i] ) ? $this->reader->sheets[0]["cells"][ $this->currentLineNumber ][$i] : NULL;
 		}
+		
 		return $data;
 	}
 	
@@ -971,7 +1010,7 @@ class ControllerCatalogImport extends Controller {
 		} else {
 			return false;
 		}
-		
+
 		foreach( $attribute_fields as $field_key => $field_value ) {
 		
 			$field_text = str_replace( array_keys($rowData), $rowData, $field_key );
@@ -1003,62 +1042,55 @@ class ControllerCatalogImport extends Controller {
 			} else {
 				$attribute_id = $this->attributes_all[ $this_attribute_group_name ]["attributes"][ $field_value ];
 			}
-			
-			$product_attribute = array(
-				"attribute_id" => $attribute_id,
-				"product_attribute_description" => array()
-			);
-			foreach( $this->languages as $language ){
-				$product_attribute["product_attribute_description"][ $language["language_id"] ] = array(
-					"text" => $field_text,
-				);
+
+			$product_attribute = array("attribute_id" => $attribute_id, "product_attribute_description" => array());
+			foreach ($this->languages as $language) {
+				$product_attribute["product_attribute_description"][$language["language_id"]] = array("text" => $field_text);
 			}
 			$product_attributes[] = $product_attribute;
 		}
-		
 		$this->model_catalog_import->addProductAttributes( $product_id, $product_attributes );
 	}
 	
-	private function import_product( $rowData, $product_settings, $manufacturer_id = 0, $category_id = array(), $seria_id = 1 ){
-		
+	private function import_product( $rowData, $product_settings, $product_option, $manufacturer_id = 0, $category_id = array()
+, $import_settings = array() ){
 		$_product_description_fields = array();
-		$_product_tag_fields = array();
 		foreach( $this->languages as $language ){
-		
+
 			$product_description_name = !empty( $product_settings["product_description"][ $language["language_id"] ]["name"] ) ?
 					str_replace( array_keys( $rowData ), $rowData, $product_settings["product_description"][ $language["language_id"] ]["name"] ) : "";
-		
+
 			$product_description_meta_description = !empty( $product_settings["product_description"][ $language["language_id"] ]["meta_description"] ) ?
 					str_replace( array_keys( $rowData ), $rowData, $product_settings["product_description"][ $language["language_id"] ]["meta_description"] ) : "";
-					
+
 			$product_description_meta_keyword = !empty( $product_settings["product_description"][ $language["language_id"] ]["meta_keyword"] ) ?
 					str_replace( array_keys( $rowData ), $rowData, $product_settings["product_description"][ $language["language_id"] ]["meta_keyword"] ) : "";
 
 			$product_description_description = !empty( $product_settings["product_description"][ $language["language_id"] ]["description"] ) ?
 					str_replace( array_keys( $rowData ), $rowData, $product_settings["product_description"][ $language["language_id"] ]["description"] ) : "";
-								
-			
-			$_product_tag_field = !empty( $product_settings["product_tag"][ $language["language_id"] ] ) ?
+
+			$product_description_tag = !empty( $product_settings["product_tag"][ $language["language_id"] ] ) ?
 				str_replace( array_keys( $rowData ), $rowData, $product_settings["product_tag"][ $language["language_id"] ] ) : "";
-		
+
 			$_product_description_fields[ $language["language_id"] ] = array(
 				"name" => $product_description_name,
 				"meta_description" => $product_description_meta_description,
-				"meta_keyword" => $product_description_meta_keyword,				
+				"meta_keyword" => $product_description_meta_keyword,
+				"description" => $product_description_description,
+				"tag" => $product_description_tag
 			);
-			
-			if (!empty($product_description_description))
-				$_product_description_fields[ $language["language_id"] ]["description"] = $product_description_description;
-		//	p($_product_description_fields);
-			$_product_tag_fields[ $language["language_id"] ] = $_product_tag_field;
-		
+
+
+			$this->seoName = $product_description_name;
+
+
 			// Пропускаем продукт если у него пустое значение поля.
-			
-			if( empty( $_product_tag_field ) && !empty( $product_settings["product_required"]["product_tag"] )) {
+
+			if( empty($product_description_tag) && !empty( $product_settings["product_required"]["product_tag"] )) {
 				$this->import_product_error ++;
 				return false;
 			}
-			
+
 			if( empty( $product_description_name ) && !empty( $product_settings["product_description_required"]["name"] )) {
 				$this->import_product_error ++;
 				return false;
@@ -1068,7 +1100,7 @@ class ControllerCatalogImport extends Controller {
 				$this->import_product_error ++;
 				return false;
 			}
-			
+
 			if( empty( $product_description_meta_keyword ) && !empty( $product_settings["product_description_required"]["meta_keyword"] )) {
 				$this->import_product_error ++;
 				return false;
@@ -1078,9 +1110,14 @@ class ControllerCatalogImport extends Controller {
 				$this->import_product_error ++;
 				return false;
 			}
-			
+
+			if( empty( $product_settings["price"] ) && $product_settings["price"] == 0 ) {
+				$this->import_product_error ++;
+				return false;
+			}
+
 		}
-		
+
 		//markup
 		$price = !empty( $product_settings["price"] ) ?
 				str_replace( array(
@@ -1088,22 +1125,22 @@ class ControllerCatalogImport extends Controller {
 				), array(
 					"", "", "", '.'
 				), str_replace( array_keys( $rowData ), $rowData, $product_settings["price"] ) ) : 0;
-		
+
 		if( !empty( $product_settings["markup"] ) ){
-		
+
 			foreach( $product_settings["markup"] as $markup ){
 				if( $price > $markup["ot"] && $price < $markup["do"] ) {
-					
+
 					$markup["percent"] = trim( $markup["percent"] );
 					if( is_numeric( $markup["percent"] ) ) {
 						$price = $price + ( ( $price / 100 ) * $markup["percent"] );
 					}
-					
+
 					$markup["add"] = trim( $markup["add"] );
 					if( is_numeric( $markup["add"] ) ) {
 						$price = $price + $markup["add"];
 					}
-					
+
 					$markup["rounding"] = trim( $markup["rounding"] );
 					if( is_numeric( $markup["rounding"] ) ) {
 						$price = round( $price, $markup["rounding"] );
@@ -1113,7 +1150,7 @@ class ControllerCatalogImport extends Controller {
 				}
 			}
 		}
-			
+
 		$product_image = array();
 		$additional_images = explode( trim( $product_settings["additional_images_delimeter"] ), str_replace( array_keys( $rowData ), $rowData, trim( $product_settings["additional_images"] ) ) );
 		$add_img_sort_order = 1;
@@ -1126,50 +1163,56 @@ class ControllerCatalogImport extends Controller {
 				);
 			}
 		}
-		
+
 		$model = !empty( $product_settings["model"] ) ?
 			str_replace( array_keys( $rowData ), $rowData, $product_settings["model"] ) : "";
-		
-		$image = !empty( $product_settings["image"] ) && file_exists( strtolower( DIR_IMAGE . str_replace( array_keys( $rowData ), $rowData, $product_settings["image"] ) )) ?
-			strtolower(str_replace( array_keys( $rowData ), $rowData, $product_settings["image"] )) : "";
-		
+
+		$image = !empty( $product_settings["image"] ) && file_exists( DIR_IMAGE . str_replace( array_keys( $rowData ), $rowData, $product_settings["image"] ) ) ?
+			str_replace( array_keys( $rowData ), $rowData, $product_settings["image"] ) : "";
+
+		if (empty( $image )) {
+			$manufacturer_setting_name = "data/battery/" . $import_settings[4]['name'];
+			$image = !empty($manufacturer_setting_name) && file_exists(DIR_IMAGE . str_replace(array_keys($rowData), $rowData, $manufacturer_setting_name) . '.jpg') ? (str_replace(array_keys($rowData), $rowData, $manufacturer_setting_name). '.jpg') : "";
+		}
+
+
 		if( empty( $image ) && !empty( $product_image ) ) {
 			$image_one = array_shift( $product_image );
 			$image = $image_one["image"];
 		}
-		
+
 		$sku = !empty( $product_settings["sku"] ) ?
-			str_replace( array_keys( $rowData ), $rowData, $product_settings["sku"] ) : "";
-			
+			str_replace( array_keys( $rowData ), $rowData, $product_settings["sku"] ) : $model;
+
 		$upc = !empty( $product_settings["upc"] ) ?
 			str_replace( array_keys( $rowData ), $rowData, $product_settings["upc"] ) : "";
-			
+
 		$location = !empty( $product_settings["location"] ) ?
 			str_replace( array_keys( $rowData ), $rowData, $product_settings["location"] ) : "";
-			
+
 		$quantity = (int) !empty( $product_settings["quantity"] ) ?
 			str_replace( array_keys( $rowData ), $rowData, $product_settings["quantity"] ) : "";
-		
+
 		if( empty( $price ) && !empty( $product_settings["product_required"]["price"] ) ) {
 			$this->import_product_error ++;
 			return false;
 		}
-		
+
 		if( empty( $model ) && !empty( $product_settings["product_required"]["model"] ) ) {
 			$this->import_product_error ++;
 			return false;
 		}
-		
+
 		if( empty( $image ) && !empty( $product_settings["product_required"]["image"] ) ) {
 			$this->import_product_error ++;
 			return false;
 		}
-		
+
 		if( empty( $product_image ) && !empty( $product_settings["product_required"]["additional_images"] ) ) {
 			$this->import_product_error ++;
 			return false;
 		}
-		
+
 		if( empty( $sku ) && !empty( $product_settings["product_required"]["sku"] ) ) {
 			$this->import_product_error ++;
 			return false;
@@ -1195,7 +1238,6 @@ class ControllerCatalogImport extends Controller {
 
 		$product_info = array(
 			"product_description" => $_product_description_fields,
-			"product_tag" => $_product_tag_fields,
 			"model" => $model,
 			"sku" => $sku,
 			"upc" => $upc,
@@ -1207,7 +1249,7 @@ class ControllerCatalogImport extends Controller {
 			"subtract" => 1,
 			"stock_status_id" => $stock_status_id,
 			"shipping" => 1,
-			"keyword" => '',
+			"keyword" => $this->mySEO($this->seoName),
 			"image" => $image,
 			"date_available" => date("Y-m-d"),
 			"length" => '',
@@ -1225,6 +1267,7 @@ class ControllerCatalogImport extends Controller {
 			),
 			"product_image" => $product_image,
 			"related" => '',
+			"product_option" => $product_option,
 			"option" => '',
 			"points" => '',
 			"product_reward" =>array(),
@@ -1236,9 +1279,9 @@ class ControllerCatalogImport extends Controller {
 		);
 		
 		if( $this->product_update == "name" ) {
-			$product_id = $this->model_catalog_import->getProductByName( mb_strtolower($product_description_name,'UTF-8') );
+			$product_id = $this->model_catalog_import->getProductByName( $product_description_name );
 		} elseif( $this->product_update == "sku" ) {
-			$product_id = $this->model_catalog_import->getProductBySku( mb_strtolower($product_info["sku"],'UTF-8') );
+			$product_id = $this->model_catalog_import->getProductBySku( $product_info["sku"] );
 		}
 		
 		if( $product_id ) {
@@ -1259,12 +1302,74 @@ class ControllerCatalogImport extends Controller {
 
 	}
 	
+	private function mySEO($data) {
+
+		$data = trim($data);
+
+		$letters_replace = array(
+			"а"=>"a","А"=>"a", "б"=>"b","Б"=>"b",
+			"в"=>"v","В"=>"v", "г"=>"g","Г"=>"g",
+			"д"=>"d","Д"=>"d", "е"=>"e","Е"=>"e",
+			"ж"=>"zh","Ж"=>"zh", "з"=>"z","З"=>"z",
+			"и"=>"i","И"=>"i", "й"=>"y","Й"=>"y",
+			"к"=>"k","К"=>"k", "л"=>"l","Л"=>"l",
+			"м"=>"m","М"=>"m", "н"=>"n","Н"=>"n",
+			"о"=>"o","О"=>"o", "п"=>"p","П"=>"p",
+			"р"=>"r","Р"=>"r", "с"=>"s","С"=>"s",
+			"т"=>"t","Т"=>"t", "у"=>"u","У"=>"u",
+			"ф"=>"f","Ф"=>"f", "х"=>"h","Х"=>"h",
+			"ц"=>"c","Ц"=>"c", "ч"=>"ch","Ч"=>"ch",
+			"ш"=>"sh","Ш"=>"sh", "щ"=>"sch","Щ"=>"sch",
+			"ъ"=>"'","Ъ"=>"'", "ы"=>"i","Ы"=>"i",
+			"ь"=>"","Ь"=>"", "э"=>"e","Э"=>"e",
+			"ю"=>"yu","Ю"=>"yu", "я"=>"ya","Я"=>"ya"
+		);
+
+		$search = array(
+					',',
+					'.',
+					' ',
+					'`',
+// 					'\'',
+					'"',
+					'/',
+					'\\',
+					'[',
+					']',
+					'|',
+					'{',
+					'}',
+					'(',
+					')',
+					'!',
+					'~',
+					'&',
+					'*',
+					'^',
+					'_',
+					'+',
+					'-----',
+					'----',
+					'---',
+					'--');
+
+		$replace = '-';
+
+		$data = iconv("UTF-8","UTF-8//TRANSLIT//IGNORE",strtr($data, $letters_replace));
+
+		$dataInSeo = strtolower(str_replace($search, $replace, $data));
+
+		return $dataInSeo;
+
+	}
+	
 	private function import_manufacturer( $rowData, $manufacturer_settings ){
 	
-		$_manufacturer_name = str_replace( array_keys( $rowData ), $rowData, $manufacturer_settings["name"] );	
-		$_manufacturer_name_ = mb_strtolower($_manufacturer_name,'UTF-8');
+		$_manufacturer_name = str_replace( array_keys( $rowData ), $rowData, $manufacturer_settings["name"] );
+		
 		$manufacturer_ids = $this->manufacturer_ids;
-		if( !empty( $_manufacturer_name ) && empty( $manufacturer_ids[ $_manufacturer_name_ ] ) ) {
+		
+		if( !empty( $_manufacturer_name ) && empty( $manufacturer_ids[ $_manufacturer_name ] ) ) {
 		
 			$manufacturer_info = array(
 				"name" => $_manufacturer_name,
@@ -1275,21 +1380,65 @@ class ControllerCatalogImport extends Controller {
 				"image" => '',
 				"sort_order" => 0
 			);
-
+		
 			$manufacturer_id = $this->model_catalog_import->addManufacturer( $manufacturer_info );
 
-			$manufacturer_ids[ mb_strtolower($_manufacturer_name,'UTF-8') ] = $manufacturer_id;
+			$manufacturer_ids[ $_manufacturer_name ] = $manufacturer_id;
 
 			$this->manufacturer_ids = $manufacturer_ids;
 		
-		} elseif( !empty( $manufacturer_ids[ mb_strtolower($_manufacturer_name,'UTF-8') ] ) ) {
-			$manufacturer_id = $manufacturer_ids[ mb_strtolower($_manufacturer_name,'UTF-8') ];			
+		} elseif( !empty( $manufacturer_ids[ $_manufacturer_name ] ) ) {
+			$manufacturer_id = $manufacturer_ids[ $_manufacturer_name ];
 		} else {
 			$manufacturer_id = 0;
-		}
+		};
 
 		return $manufacturer_id;
 
+	}
+
+	private function collectProductOption($rowData, $option_settings) {
+		$this->load->model('catalog/import');
+
+		$_product_option = array();
+
+		foreach($option_settings['options'] as $option) {
+			$option_id = (int)str_replace(array_keys($rowData), $rowData, $option['option_id']);
+
+			$product_option_value = array();
+
+			foreach($option['values'] as $value) {
+				$option_value_name = str_replace(array_keys($rowData), $rowData, $value['option_value_name']);
+
+				$option_value_id = $this->model_catalog_import->getOptionValueId($option_id, $option_value_name);
+
+				if(!$option_value_id) continue;
+
+				$product_option_value[] = array(
+					'option_value_id'	=> (int)$option_value_id,
+					'quantity'			=> (int)str_replace(array_keys($rowData), $rowData, $value['quantity']),
+					'subtract'			=> (int)$value['subtract'],
+					'price'				=> (float)str_replace(array_keys($rowData), $rowData, $value['price']),
+					'price_prefix'		=> $value['price_prefix'],
+					'points'			=> (float)str_replace(array_keys($rowData), $rowData, $value['points']),
+					'points_prefix'		=> $value['points_prefix'],
+					'weight'			=> (float)str_replace(array_keys($rowData), $rowData, $value['weight']),
+					'weight_prefix'		=> $value['weight_prefix']
+				);
+			}
+
+			if(!$product_option_value) continue;
+
+			$_product_option[] = array(
+				'type'						=> $this->model_catalog_import->getOptionType($option_id),
+				'option_id'					=> $option_id,
+				'option_value'				=> '',
+				'required'					=> (int)str_replace(array_keys($rowData), $rowData, $option['required']),
+				'product_option_value'		=> $product_option_value
+			);
+		}
+
+		return $_product_option;
 	}
 
 	private function import_category( $rowData, $category_settings ){
@@ -1307,7 +1456,10 @@ class ControllerCatalogImport extends Controller {
 			$parent_id = 0;
 			
 			foreach( $_categorys as $_key => $_category ){
-			
+				$_category_name_ = str_replace( array_keys( $rowData ), $rowData, $_category );
+				if (empty($_category_name_)) {
+					continue;
+				}
 				$_category = trim( $_category );
 			
 				$_category_name = array();
@@ -1325,8 +1477,8 @@ class ControllerCatalogImport extends Controller {
 				$_categorys_new[$_key] = trim( str_replace( array_keys( $rowData ), $rowData, $_category ) );
 				$new_category_path = implode( " &gt; ", $_categorys_new );
 
-				if( !empty($category_ids[ mb_strtolower($new_category_path,'UTF-8') ]) ){
-					$parent_id = $category_ids[mb_strtolower($new_category_path,'UTF-8')];
+				if( !empty($category_ids[ $new_category_path ]) ){
+					$parent_id = $category_ids[$new_category_path];
 				} else {
 					$_category_description_fields = array();
 					foreach( $this->languages as $language ){
@@ -1354,15 +1506,15 @@ class ControllerCatalogImport extends Controller {
 							)
 						),
 					);
-					
-					$category_ids[mb_strtolower($new_category_path,'UTF-8')] = $this->model_catalog_import->addCategory( $category_info );
-					$parent_id = $category_ids[mb_strtolower($new_category_path,'UTF-8')];
+
+					$category_ids[$new_category_path] = $this->model_catalog_import->addCategory( $category_info );
+					$parent_id = $category_ids[$new_category_path];
 					
 					
 				}
 			}
 			
-			$return[] = $category_ids[mb_strtolower($new_category_path,'UTF-8')];
+			$return[] = $category_ids[$new_category_path];
 			
 		}
 

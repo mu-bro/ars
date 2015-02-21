@@ -6,18 +6,10 @@
     <?php echo $breadcrumb['separator']; ?><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a>
     <?php } ?>
   </div>
-
-	<?php if ($this->request->get['information_id'] != 7) { ?>
-			<?php echo $description; ?>
-	<?php } else { ?>
-		<iframe src="http://podborakb.ru/" style="width: 100%;border: none;"></iframe>
-	<?php } ?>
-  
-	
-
-  
-  <div class="buttons">
-    <div class="right"><a href="<?php echo $continue; ?>" class="button"><?php echo $button_continue; ?></a></div>
+  <div class="information_block">
+    <?php echo $description; ?>
+    <div class="clear" style="height:20px;"></div>
   </div>
+
   <?php echo $content_bottom; ?></div>
 <?php echo $footer; ?>

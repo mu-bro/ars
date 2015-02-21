@@ -21,6 +21,7 @@ class ControllerCommonHeader extends Controller {
 
 		$this->data['base'] = $server;
 		$this->data['google_analytics'] = html_entity_decode($this->config->get('config_google_analytics'), ENT_QUOTES, 'UTF-8');
+		$this->data['yandex_analytics'] = html_entity_decode($this->config->get('config_yandex_analytics'), ENT_QUOTES, 'UTF-8');
 		$this->data['name'] = $this->config->get('config_name');
 
 		if ($this->config->get('config_icon') && file_exists(DIR_IMAGE . $this->config->get('config_icon'))) {

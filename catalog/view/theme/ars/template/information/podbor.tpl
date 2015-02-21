@@ -172,38 +172,41 @@ function showResults() {
 	polyarity = $("#polyarities").val().replace(/\s/g,"%20");
 
 	url = "http://podborakb.ru/api/filter?code=" + code + "&dimention=" + dimention + "&capacity=" + capacity + "&polyarity=" + polyarity;
-	$.getJSON( "api.php", { url: url } ).done(function( json ) {
+	$.getJSON( "index.php?route=information/podbor/results", { url: url } ).done(function( json ) {
+	//	$.getJSON( "api.php", { url: url } ).done(function( json ) {
 		htmlText = "";
 		if (json == "") {
 			htmlText = "<span style='margin-left:14px;' >Подходящих аккумуляторов не найдено</span>";
+		} else {
+			$("#filter").html(json['results']);
 		}
-		for(var key in json){
-			htmlText += '<div class="akbBox" >' +
-				'<div class="manufacturer" ><span>' +
-					json[key]["Brand"] +
-				'</span></div>' +
-				'<div class="name" >' +
-					json[key]["Number"] +
-				'</div>' +
-				'<div class="image">' +
-					'<image src="http://podborakb.ru/'+ json[key]["Image"] +'" />' +
-				'</div>' +
-				'<div class="add_info showen" >' +
-					'<div class="parametrs">' +
-						'Ёмкость:' + json[key]["Capacity"] +
-					'</div>' +
-					'<div class="parametrs">' +
-						'Размер:' + json[key]["Dimensions"] +
-					'</div>' +
+//		for(var key in json){
+//			htmlText += '<div class="akbBox" >' +
+//				'<div class="manufacturer" ><span>' +
+//					json[key]["Brand"] +
+//				'</span></div>' +
+//				'<div class="name" >' +
+//					json[key]["Number"] +
+//				'</div>' +
+//				'<div class="image">' +
+//					'<image src="http://podborakb.ru/'+ json[key]["Image"] +'" />' +
+//				'</div>' +
+//				'<div class="add_info showen" >' +
+//					'<div class="parametrs">' +
+//						'Ёмкость:' + json[key]["Capacity"] +
+//					'</div>' +
+//					'<div class="parametrs">' +
+//						'Размер:' + json[key]["Dimensions"] +
+//					'</div>' +
+//
+//					'<div class="parametrs">' +
+//						'Полярность:' + json[key]["Polyarity"] +
+//					'</div>' +
+//				'</div>' +
+//			'</div>';
+//		}
 
-					'<div class="parametrs">' +
-						'Полярность:' + json[key]["Polyarity"] +
-					'</div>' +
-				'</div>' +
-			'</div>';
-		}
-		$("#filter").html(htmlText);
-		$(".additional_filter").css("visibility", "visible");
+		//$(".additional_filter").css("visibility", "visible");
 	});
 }
 </script>

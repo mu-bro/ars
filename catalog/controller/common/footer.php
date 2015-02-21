@@ -29,7 +29,9 @@ $this->data = array_merge( $this->data , $this->language->load('common/footer'))
 			$this->data['logo'] = $server . 'image/data/logo_bottom.png';// . $this->config->get('config_logo');
 		} else {
 			$this->data['logo'] = '';
-		}		
+		}
+
+		$this->data['chat_plugin'] = html_entity_decode($this->config->get('config_chat_plugin'), ENT_QUOTES, 'UTF-8');
 
 		$this->data['contact'] = $this->url->link('information/contact');
 		$this->data['return'] = $this->url->link('account/return/insert', '', 'SSL');

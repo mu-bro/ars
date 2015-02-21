@@ -42,6 +42,10 @@ class ControllerCommonSeoUrl extends Controller {
 			
 			if (isset($this->request->get['product_id'])) {
 				$this->request->get['route'] = 'product/product';
+			} elseif ($this->request->get['_route_'] ==  'podbor') { $this->request->get['route'] =  'information/podbor';
+			} elseif ($this->request->get['_route_'] ==  'contact') { $this->request->get['route'] =  'information/contact';
+			} elseif ($this->request->get['_route_'] ==  'actions') { $this->request->get['route'] =  'information/actions';
+			} elseif ($this->request->get['_route_'] ==  'soveti') { $this->request->get['route'] =  'information/news';
 			} elseif (isset($this->request->get['path'])) {
 				$this->request->get['route'] = 'product/category';
 			} elseif (isset($this->request->get['manufacturer_id'])) {

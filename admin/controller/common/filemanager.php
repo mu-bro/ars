@@ -3,7 +3,8 @@ class ControllerCommonFileManager extends Controller {
 	private $error = array();
 
 	public function index() {
-$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
+
+$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
 
 		if (isset($this->request->server['HTTPS']) && (($this->request->server['HTTPS'] == 'on') || ($this->request->server['HTTPS'] == '1'))) {
 			$this->data['base'] = HTTPS_SERVER;
@@ -132,7 +133,8 @@ class ControllerCommonFileManager extends Controller {
 	}
 
 	public function create() {
-$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
+
+$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
 
 		$json = array();
 
@@ -168,7 +170,8 @@ class ControllerCommonFileManager extends Controller {
 	}
 
 	public function delete() {
-$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
+
+$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
 
 		$json = array();
 
@@ -228,7 +231,8 @@ class ControllerCommonFileManager extends Controller {
 	}
 
 	public function move() {
-$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
+
+$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
 
 		$json = array();
 
@@ -270,7 +274,8 @@ class ControllerCommonFileManager extends Controller {
 	}
 
 	public function copy() {
-$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
+
+$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
 
 		$json = array();
 
@@ -354,7 +359,8 @@ class ControllerCommonFileManager extends Controller {
 	}
 
 	public function rename() {
-$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
+
+$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
 
 		$json = array();
 
@@ -396,7 +402,8 @@ class ControllerCommonFileManager extends Controller {
 	}
 
 	public function upload() {
-$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
+
+$this->data = array_merge( $this->data , $this->language->load('common/filemanager'));
 
 		$json = array();
 
@@ -412,11 +419,7 @@ class ControllerCommonFileManager extends Controller {
 
 				if (!is_dir($directory)) {
 					$json['error'] = $this->language->get('error_directory');
-				}
-
-				if ($this->request->files['image']['size'] > 300000) {
-					$json['error'] = $this->language->get('error_file_size');
-				}
+				}				
 
 				$allowed = array(
 					'image/jpeg',

@@ -260,10 +260,13 @@ $this->data = array_merge( $this->data , $this->language->load('setting/setting'
 			"config_schedule" => false,
 			"config_schedule_bottom" => false,
 			"config_email" => false,
+			"config_deliver_email" => false,
 			"config_telephone_pre" => false,
 			"config_telephone" => false,
 			"config_telephone2_pre" => false,
 			"config_telephone2" => false,
+			"config_telephone_delivery_pre" => false,
+			"config_telephone_delivery" => false,
 			"config_fax" => false,
 			"config_title" => false,
 			"config_meta_description" => false,
@@ -321,8 +324,9 @@ $this->data = array_merge( $this->data , $this->language->load('setting/setting'
 			"config_image_additional_width" => false,
 			"config_image_additional_height" => false,
 			"config_image_related_width" => false,
-			"config_image_related_height" => false
-			
+			"config_image_related_height" => false,
+			"config_yandex_analytics" => false,
+			"config_chat_plugin" => false,
 		);
 
 		foreach ($config_fields as $k => $v) {

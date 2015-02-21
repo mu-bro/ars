@@ -33,7 +33,8 @@
 		</div>
 	</div>
 	<div class="product-grid">
-		<?php include 'catalog/view/theme/ars/template/product/product_list.tpl'; ?>
+		<br/><img src="catalog/view/theme/ars/image/loading.gif"> Загрузка товаров...<br/><br/>
+		<?php // include 'catalog/view/theme/ars/template/product/product_list.tpl'; ?>
 	</div>
 	<div class="pagination"><?php echo $pagination; ?></div>
   <?php } ?>

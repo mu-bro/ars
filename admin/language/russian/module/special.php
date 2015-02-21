@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']       = 'Акции';
+$_['heading_title']       = 'Товары со скидками';
 
 // Text
 $_['text_module']         = 'Модули';

@@ -1,52 +1,44 @@
 <?php
 class ControllerModuleBestSeller extends Controller {
 	protected function index($setting) {
-$this->data = array_merge( $this->data , $this->language->load('module/bestseller'));
+
+		$this->document->addStyle('catalog/view/theme/' . $this->config->get('config_template') . '/stylesheet/animate.min.css');
+		$this->data = array_merge( $this->data , $this->language->load('module/bestseller'));
+		$this->data = array_merge( $this->data , $this->language->load('product/category'));
 		
 		$this->load->model('catalog/product');
 		
 		$this->load->model('tool/image');
 
 		$this->data['products'] = array();
+		$product_id = $this->request->get['product_id'];
 
-		$results = $this->model_catalog_product->getBestSellerProducts($setting['limit']);
-		
-		foreach ($results as $result) {
-			if ($result['image']) {
-				$image = $this->model_tool_image->resize($result['image'], $setting['image_width'], $setting['image_height']);
-			} else {
-				$image = false;
-			}
-			
-			if (($this->config->get('config_customer_price') && $this->customer->isLogged()) || !$this->config->get('config_customer_price')) {
-				$price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')));
-			} else {
-				$price = false;
-			}
-					
-			if ((float)$result['special']) {
-				$special = $this->currency->format($this->tax->calculate($result['special'], $result['tax_class_id'], $this->config->get('config_tax')));
-			} else {
-				$special = false;
-			}	
-			
-			if ($this->config->get('config_review_status')) {
-				$rating = $result['rating'];
-			} else {
-				$rating = false;
-			}
-							
-			$this->data['products'][] = array(
-				'product_id' => $result['product_id'],
-				'thumb'   	 => $image,
-				'name'    	 => $result['name'],
-				'price'   	 => $price,
-				'special' 	 => $special,
-				'rating'     => $rating,
-				'reviews'    => sprintf($this->language->get('text_reviews'), (int)$result['reviews']),
-				'href'    	 => $this->url->link('product/product', 'product_id=' . $result['product_id']),
-			);
+		if (isset($product_id)) {
+			$attributes = $this->model_catalog_product->getProductAttributes($product_id);
+			$filter = array();
+			foreach ($attributes as $attribute_group) {
+				foreach ($attribute_group['attribute'] as $attribute) {
+					if (in_array($attribute['attribute_id'],array(13,14))) {
+						$filter['attribute_value'][$attribute['attribute_id']] = array($attribute['text'] - 2, $attribute['text'] - 1, $attribute['text'], $attribute['text'] + 1, $attribute['text'] + 2);	
+					} elseif ($attribute['attribute_id'] == 12) {
+						$filter['attribute_value'][$attribute['attribute_id']] = array($attribute['text'] - 3, $attribute['text'] - 2, $attribute['text'] - 1, $attribute['text'],
+							$attribute['text'] + 1, $attribute['text'] + 2, $attribute['text'] + 3);
+					} else {
+						$filter['attribute_value'][$attribute['attribute_id']][] = $attribute['text'];
+					}
+
+				}
+
+			}//p($filter,$attributes);
+			$filter["exclude_product"] = $product_id;
+			$filter["limit"] = $setting['limit'];
+			$results = $this->model_catalog_product->getProductsByFilter($filter);
+			$this->load->model('tool/image');
+			$this->data['products'] = $this->model_catalog_product->prepareProductList($results);
+		} else {
+			$this->data['products'] = array();
 		}
+
 
 		if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/module/bestseller.tpl')) {
 			$this->template = $this->config->get('config_template') . '/template/module/bestseller.tpl';

@@ -58,6 +58,10 @@
                 <span class="error"><?php echo $error_email; ?></span>
                 <?php } ?></td>
             </tr>
+              <tr>
+                  <td><span class="required">*</span> E-mail доставщика аккумуляторов</td>
+                  <td><input type="text" name="config_deliver_email" value="<?php echo $config_deliver_email; ?>" size="40" /></td>
+              </tr>
             <tr>
               <td><span class="required">*</span> <?php echo $entry_telephone; ?></td>
               <td>
@@ -68,12 +72,20 @@
                 <?php } ?></td>
             </tr>
             <tr>
-              <td><?php echo $entry_telephone; ?></td>
+              <td>Телефон2: </td>
               <td>
 				<input type="text" name="config_telephone2_pre" value="<?php echo $config_telephone2_pre; ?>" size="9" />
 				<input type="text" name="config_telephone2" value="<?php echo $config_telephone2; ?>" />
               </td>
-            </tr>            
+            </tr>
+            <tr>
+              <td>Телефон доставщика аккумуляторов: </td>
+              <td>
+				<input type="text" name="config_telephone_delivery_pre" value="<?php echo $config_telephone_delivery_pre; ?>" size="9" />
+				<input type="text" name="config_telephone_delivery" value="<?php echo $config_telephone_delivery; ?>" />
+              </td>
+            </tr>
+
             <tr>
               <td><?php echo $entry_fax; ?></td>
               <td><input type="text" name="config_fax" value="<?php echo $config_fax; ?>" /></td>
@@ -1016,6 +1028,15 @@
               <td><?php echo $entry_google_analytics; ?></td>
               <td><textarea name="config_google_analytics" cols="40" rows="5"><?php echo $config_google_analytics; ?></textarea></td>
             </tr>
+              <tr>
+                  <td>Яндекс метрика:</td>
+                  <td><textarea name="config_yandex_analytics" cols="40" rows="5"><?php echo $config_yandex_analytics;
+                          ?></textarea></td>
+              </tr>
+              <tr>
+                  <td>Онлайн чат:</td>
+                  <td><textarea name="config_chat_plugin" cols="40" rows="5"><?php echo $config_chat_plugin; ?></textarea></td>
+              </tr>
           </table>
         </div>
       </form>

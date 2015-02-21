@@ -617,12 +617,16 @@ class ModelCatalogProduct extends Model {
 
 	public function prepareProductList($results, $url = "") {
 		$products = array();
-		
+
 		foreach ($results as $result) {
+			$salePrice = false;
 			if ($result['image']) {
 				$image = $this->model_tool_image->resize($result['image'], $this->config->get('config_image_product_width'), $this->config->get('config_image_product_height'));
+				if (empty($image)) {
+					$image = $this->model_tool_image->resize("no_image.png", $this->config->get('config_image_product_width'), $this->config->get('config_image_product_height'));
+				}
 			} else {
-				$image = false;
+				$image = $this->model_tool_image->resize("no_image.png", $this->config->get('config_image_product_width'), $this->config->get('config_image_product_height'));
 			}
 
 			if (($this->config->get('config_customer_price') && $this->customer->isLogged()) || !$this->config->get('config_customer_price')) {
@@ -634,6 +638,15 @@ class ModelCatalogProduct extends Model {
 			if ((float)$result['special']) {
 				$special = $this->currency->format($this->tax->calculate($result['special'], $result['tax_class_id'], $this->config->get('config_tax')),"","",true,true);
 			} else {
+				if (isset($price)) {
+					$capacity = $this->getProductCapacity($result['product_id']);
+					if ($capacity) {
+						$oldBatteryPrice = $this->model_catalog_product->getCapacityPrice
+						($capacity);
+					}
+					$salePrice = $this->currency->format($this->tax->calculate($result['price'] - $result['price'] * 0.1 - $oldBatteryPrice, $result['tax_class_id'], $this->config->get('config_tax')), "", "", true, true);
+
+				}
 				$special = false;
 			}
 
@@ -654,11 +667,10 @@ class ModelCatalogProduct extends Model {
 			$products[] = array(
 				'product_id'  => $result['product_id'],
 				'thumb'       => $image,
-
 				'attributes'      => $attributes,
-
 				'name'        => $result['name'],
 				'model'       => $result['model'],
+				'sku'         => $result['sku'],
 				'quantity'    => $result['quantity'],
 				'stock_status'=> $result['stock_status'],
 				'manufacturer'=> $result['manufacturer'],
@@ -666,14 +678,99 @@ class ModelCatalogProduct extends Model {
 				'description' => utf8_substr(strip_tags(html_entity_decode($result['description'], ENT_QUOTES, 'UTF-8')), 0, 100) . '..',
 				'price'       => $price,
 				'special'     => $special,
+				'salePrice'   => $salePrice,
 				'tax'         => $tax,
 				'rating'      => $result['rating'],
 				'reviews'     => sprintf($this->language->get('text_reviews'), (int)$result['reviews']),
 				'href'        => $this->url->link('product/product', 'product_id=' . $result['product_id'] . $url)
 			);
-			
+			//p($products);
 		}
 		return $products;
-	}	
+	}
+
+	public function getProductsByFilter($data) {
+		$sql = "SELECT DISTINCT p.product_id FROM " . DB_PREFIX . "product p";
+		if($data['attribute_value']) {
+			$sql .= "
+			LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id)
+			LEFT JOIN " . DB_PREFIX . "product_attribute p2a ON (p2a.product_id=p.product_id)";
+		}
+		$sql .= " WHERE 1";
+
+		if($data['attribute_value']) {
+				$i = 0;
+				foreach($data['attribute_value'] as $attribute_id => $values) {
+					$sql .= " AND EXISTS
+						(select 1 FROM " . DB_PREFIX . "product_attribute p2a" . $i . " WHERE p2a" . $i . ".product_id=p2a.product_id AND p2a" . $i . ".attribute_id = " . (int)$attribute_id . " ";
+					if (isset($values['min']) || isset($values['max'])) {
+						$sql .= " AND p2a.attribute_id = " . (int)$attribute_id;
+						if (isset($values['min']) && $values['min'] >= 0) {
+							$sql .= " AND p2a.text >= " . $values['min'];
+						}
+						if (isset($values['max']) && $values['max'] > 0) {
+							$sql .= " AND p2a.text <= " . $values['max'];
+						}
+						$sql .= ")";
+					} else {
+						$sql .= "AND (p2a" . $i . ".text like '%" . implode("%' OR p2a" . $i . ".text like '%", array_map(array($this->db, 'escape'), $values)) . "%')) ";
+					}
+					$i++;
+				}
+		}
+
+		$sql .= " AND p.status = '1' AND p.date_available <= NOW( ) AND p2s.store_id = " . (int)$this->config->get('config_store_id');
+
+		if (isset($data['exclude_product'])) {
+			$sql .= " AND p.product_id != " . (int)$data['exclude_product'];
+		}
+
+
+		$sql .= " ORDER BY sort_order ASC";
+
+		if (isset($data['limit'])) {
+			$sql .= " LIMIT " . (int)$data['limit'];
+		}
+
+		$query = $this->db->query($sql);
+
+		$product_data = array();
+		if($query->rows) {
+			$this->load->model('catalog/product');
+			foreach($query->rows as $result) {
+				$product_data[$result['product_id']] = $this->model_catalog_product->getProduct($result['product_id']);
+			}
+		}
+		return $product_data;
+	}
+
+	public function getCapacityPrice($capacity) {
+		$capacPrice = array(
+			54 => 250,
+			66 => 300,
+			79 => 400 ,
+			99 => 450,
+			120 => 600,
+			140 => 750,
+			200 => 1050,
+			225 => 1200
+		);
+		if (isset($capacPrice[$capacity])) {
+			return $capacPrice[$capacity];
+		} else {
+			foreach ($capacPrice as $capac => $price) {
+				if ($capacity < $capac) {
+					return $price;
+				}
+			}
+		}
+	}
+
+	public function getProductCapacity($product_id) {
+		$capacity = $this->db->query("SELECT pa.text FROM " . DB_PREFIX . "product_attribute pa WHERE pa.product_id = '" . (int)$product_id . "' AND pa.attribute_id = '3' AND pa
+.language_id = '" . (int)$this->config->get('config_language_id') . "'");
+
+		return (isset($capacity->row['text'])) ? $capacity->row['text'] : false;
+	}
 }
 ?>
